@@ -53,25 +53,28 @@ class Piece:
         return Voice(name, csnd_instrument, register, line_length, self)
 
     def perform(self):
-        section_length = 8*15
-        options = [self.loop, self.evolve]
-        return choice(options)(section_length)
+        section_length = 8*30
+        output = "t 0 360\n"
+        output += self.loop(section_length)
+        output += self.evolve(section_length)
+        # options = [self.loop, self.evolve]
+        return output #choice(options)(section_length)
 
     def loop(self,length):
-        output = ";LOOP\nt 0 360\n"
+        output = ";LOOP\n"
         for __ in range(length):
             for i in range(len(self.voice_list)):
-                line = self.voice_list[i].line
-                note = line.note_list[self.play_count%self.voice_list[i].line_length]
+                note = self.voice_list[i].line.note_list[self.play_count%self.voice_list[i].line_length]
                 output += note._play()
             self.play_count += 1
         return output
 
     def evolve(self,length):
-        output = ";EVOLVE\nt 0 360\n"
+        output = ";EVOLVE\n"
         for __ in range(length):
             for i in range(len(self.voice_list)):
                 note = self.voice_list[i].line.note_list[self.play_count%self.voice_list[i].line_length]
+                note._evolve()
                 output += note._play()
             self.play_count += 1
 
@@ -198,3 +201,10 @@ class Note:
         """Return Csound note event"""
         output = f"i {self.voice.csnd_instrument} {self.piece.play_count} {self.duration} [{self.amplitude}*{self.on_off}/8] [{self.frequency}]" + "\n"
         return output
+
+    def _evolve(self):
+        """Evolve note"""
+        """Evolve Line."""
+        prob = 0.50
+        if random() <= prob:
+            self.__init__(self.piece, self.voice)
