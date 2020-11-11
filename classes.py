@@ -53,11 +53,14 @@ class Piece:
         return Voice(name, csnd_instrument, register, line_length, self)
 
     def perform(self):
-        section_length = 8*30
+        options = [self.loop, self.evolve]
         output = "t 0 360\n"
-        output += self.loop(section_length)
-        output += self.evolve(section_length)
-        # options = [self.loop, self.evolve]
+        section_number = 0
+        while section_number < 5:
+            self.mode = self._set_mode()
+            section_length = 8*10
+            output += choice(options)(section_length)
+            section_number += 1
         return output #choice(options)(section_length)
 
     def loop(self,length):
@@ -87,13 +90,7 @@ class Piece:
 
 class Voice:
     """A class used to represent an instrument part."""
-    # Properties
-        # Name
-        # Voice number
-        # Instrument (function table in Csound)
-        # Register
-        # Section (e.g. rhythm, melody, bass)
-        # Line
+
     # Methods
         #__init__
             # Select instrument
@@ -199,12 +196,12 @@ class Note:
 
     def _play(self):
         """Return Csound note event"""
-        output = f"i {self.voice.csnd_instrument} {self.piece.play_count} {self.duration} [{self.amplitude}*{self.on_off}/8] [{self.frequency}]" + "\n"
+        output = f"i {self.voice.csnd_instrument} {self.piece.play_count} {self.duration} [{self.amplitude}*{self.on_off}/8] [{self.frequency}] ;{self.piece.mode[0]}" + "\n"
         return output
 
     def _evolve(self):
         """Evolve note"""
         """Evolve Line."""
-        prob = 0.50
+        prob = 0.5
         if random() <= prob:
             self.__init__(self.piece, self.voice)
