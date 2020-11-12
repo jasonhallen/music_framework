@@ -1,8 +1,9 @@
 # Handled in Csound
     # Instrument amplitude scaling factor
 
-from random import choice, random
+from random import choice, random, randrange
 import elements
+from engine import *
 
 
 class Piece:
@@ -10,19 +11,28 @@ class Piece:
 
     def __init__(self, melody_voices, drum_voices, bass_voices):
         """Initialize the piece of music"""
-        self.mode = self._set_mode()
+        self.mode = None
+        self._set_mode()
         self.offset = self._set_offset()
         self.max_line_length = 48
-        self.measure_lengths = [8,12,16,20,24,28,32]
+        self.measure_lengths = choice([[8,12,16,20,24,28,32],[6,9,12,15,18,21,24,27,30]])
         self.melody_voices = melody_voices
         self.drum_voices = drum_voices
         self.bass_voices = bass_voices
         self.voice_list = self._set_voices()
         self.play_count = 0
+        self.rule_engine = RuleEngine()
 
     def _set_mode(self):
-
-        return choice(elements.mode_options)
+        diatonic = [0.00, 0.02, 0.04, 0.05, 0.07, 0.09, 0.11]
+        weights = [[(0,3),(2,2),(4,2)],[(0,3),(2,2),(4,2),(6,2)]]
+        for __ in range(randrange(0,7)):
+            diatonic.append(diatonic[0])
+            diatonic = diatonic[1:]
+        for tuple in choice(weights):
+            for __ in range(tuple[1]):
+                diatonic.append(diatonic[tuple[0]])
+        self.mode = diatonic
 
     def _set_offset(self):
         return choice(["-0.92","-0.91","-0.9","-0.89","+0.06","+0.05","+0.04","+0.03","+0.02","+0.01","+0"])
@@ -32,61 +42,55 @@ class Piece:
         voice_list = []
 
         for __ in range(self.melody_voices):
-            voice_list.append(self._construct_voice(elements.melody_instruments))
+            voice_list.append(self._construct_voice(choice(elements.melody_instruments)))
 
-        inst = choice(elements.drum_instruments)
+        drum_kit = choice(elements.drum_instruments)
         for __ in range(self.drum_voices):
-            voice_list.append(self._construct_voice(elements.drum_instruments))
+            voice_list.append(self._construct_voice(drum_kit))
 
         for __ in range(self.bass_voices):
-            voice_list.append(self._construct_voice(elements.bass_instruments))
+            voice_list.append(self._construct_voice(choice(elements.bass_instruments)))
 
         return voice_list
 
-    def _construct_voice(self, instruments):
+    def _construct_voice(self, instrument):
 
-        inst = choice(instruments)
-        name = inst[0]
-        csnd_instrument = choice(inst[1])
-        register = choice(inst[2])
+        name = instrument[0]
+        csnd_instrument = choice(instrument[1])
+        register = choice(instrument[2])
         line_length = choice(self.measure_lengths)
         return Voice(name, csnd_instrument, register, line_length, self)
 
     def perform(self):
-        options = [self.loop, self.evolve]
+        section_rules = []
         output = "t 0 360\n"
         section_number = 0
-        while section_number < 5:
-            self.mode = self._set_mode()
-            section_length = 8*10
-            output += choice(options)(section_length)
+        while section_number < 20:
+            section_length = 8*randrange(4,6)
+            section_rules = []
+            section_rules.append(choice([None, self._set_mode]))
+            if section_rules[0]:
+                section_rules[0]()
+            note_rules = []
+            note_rules.append(choice([None, self.evolve]))
+            # self.rule_list.select_section_rules()
+            # output += choice(options)(section_length)
+            # self.mode = self._set_mode()
+            output += ";LOOP\n"
+            for __ in range(section_length):
+                for i in range(len(self.voice_list)):
+                    note = self.voice_list[i].line.note_list[self.play_count%self.voice_list[i].line_length]
+                    # Fire rules in the rule_list
+                    if note_rules[0]:
+                        note_rules[0](note,0.7)
+                    output += note._play()
+                self.play_count += 1
             section_number += 1
         return output #choice(options)(section_length)
 
-    def loop(self,length):
-        output = ";LOOP\n"
-        for __ in range(length):
-            for i in range(len(self.voice_list)):
-                note = self.voice_list[i].line.note_list[self.play_count%self.voice_list[i].line_length]
-                output += note._play()
-            self.play_count += 1
-        return output
+    def evolve(self, note, prob):
+        note._evolve(prob)
 
-    def evolve(self,length):
-        output = ";EVOLVE\n"
-        for __ in range(length):
-            for i in range(len(self.voice_list)):
-                note = self.voice_list[i].line.note_list[self.play_count%self.voice_list[i].line_length]
-                note._evolve()
-                output += note._play()
-            self.play_count += 1
-
-        #output = ";EVOLVE\nt 0 360\n"
-        #for __ in range(length):
-        #    for i in range(len(self.voice_list)):
-        #        self.voice_list[i].line.evolve()
-        #        output += self.voice_list[i].play()
-        return output
 
 class Voice:
     """A class used to represent an instrument part."""
@@ -107,9 +111,10 @@ class Voice:
         self.csnd_instrument = csnd_instrument
         self.register = register
         self.line_length = line_length
+        self.busyness = random()/2
         self.piece = piece
         self.line = Line(self, piece)
-        self.play_count = 0
+        # self.play_count = 0
 
     def __str__(self):
         """Return string representation."""
@@ -119,10 +124,10 @@ class Voice:
         """Return string representation."""
         return self.__str__()
 
-    def play(self):
-        """Play Voice's line."""
-        output, self.play_count = self.line._play(self.csnd_instrument, self.play_count)
-        return output
+    #def play(self):
+    #    """Play Voice's line."""
+    #    output, self.play_count = self.line._play(self.csnd_instrument, self.play_count)
+    #    return output
 
 
 class Line:
@@ -180,7 +185,7 @@ class Note:
         self.voice = voice
         self.duration = choice([0.5,0.5,0.5,1,1,1,1,1,3,3,3,6])
         self.amplitude = choice([0.3,0.5,0.7,0.9])
-        self.on_off = choice([0,0,0,1])
+        self.on_off = self._set_on_off()
         self.frequency = self._set_frequency()
 
     def __str__(self):
@@ -191,17 +196,21 @@ class Note:
         """Return string representation."""
         return str(self.frequency)
 
+    def _set_on_off(self):
+        if random() <= self.voice.busyness:
+            return 1
+        else:
+            return 0
+
     def _set_frequency(self):
-        return f"{self.voice.register} + {choice(self.piece.mode[1])} {self.piece.offset}"
+        return f"{self.voice.register} + {choice(self.piece.mode)} {self.piece.offset}"
 
     def _play(self):
         """Return Csound note event"""
-        output = f"i {self.voice.csnd_instrument} {self.piece.play_count} {self.duration} [{self.amplitude}*{self.on_off}/8] [{self.frequency}] ;{self.piece.mode[0]}" + "\n"
+        output = f"i {self.voice.csnd_instrument} {self.piece.play_count} {self.duration} [{self.amplitude}*{self.on_off}/8] [{self.frequency}] ;{self.piece.mode}" + "\n"
         return output
 
-    def _evolve(self):
+    def _evolve(self, prob):
         """Evolve note"""
-        """Evolve Line."""
-        prob = 0.5
         if random() <= prob:
             self.__init__(self.piece, self.voice)

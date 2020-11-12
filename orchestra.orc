@@ -137,7 +137,7 @@ instr 1000 ; mixer
     ;asigl butterlp asigl, 5000
     ;asigr butterlp asigr, 5000
     areverbl,areverbr freeverb asigl,asigr,0.6,0.7
-    outs asigl*0.8+areverbl*1.5,asigr*0.8+areverbr*1.5
+    outs asigl*1+areverbl*1.5,asigr*1+areverbr*1.5
     chnclear "mixl"
     chnclear "mixr"
 endin
