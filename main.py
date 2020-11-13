@@ -4,8 +4,6 @@ import ctcsound
 
 # TASKS
     # Alignment at start, center, or end of section
-    # Add swing option
-    # Evolve random
     # Evolve to line
     # Copy another instrument line but shift the beat
     # Evolving transitions from one line to another versus abrupt transitions
