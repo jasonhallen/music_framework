@@ -1,4 +1,4 @@
-from random import choice
+from random import choice, randrange
 
 class RuleEngine():
     """Determines which rules to apply to piece"""
@@ -51,28 +51,26 @@ class Rule():
         preconditions = not any(rule.function == cls.evolve for rule in rule_list)
         return cls(function, args, preconditions)
 
-    @classmethod
-    def mimic_constructor(cls, piece):
-        function = cls.mimic
-        args = (choice(piece.voice_list),choice(piece.voice_list))
-        preconditions = args[0] != args[1]
-        return cls(function, args, preconditions)
-
     def evolve(self, note, prob):
         note._evolve(prob[0])
 
+    @classmethod
+    def mimic_constructor(cls, piece):
+        function = cls.mimic
+        args = (choice(piece.voice_list),choice(piece.voice_list),choice([0,randrange(1,8)]))
+        preconditions = args[0] != args[1]
+        return cls(function, args, preconditions)
+
     def mimic(self, note, args):
         """Turn note into target_voice note"""
-        copier_voice = args[0]
-        target_voice = args[1]
-        if note.voice == copier_voice:
-            note.duration = target_voice.line.note_list[note.piece.play_count%target_voice.line_length].duration
-            note.amplitude = target_voice.line.note_list[note.piece.play_count%target_voice.line_length].amplitude
-            note.on_off = target_voice.line.note_list[note.piece.play_count%target_voice.line_length].on_off
-            note.frequency = target_voice.line.note_list[note.piece.play_count%target_voice.line_length].frequency
-
-    def check_preconditions(self):
-        pass
+        if note.voice == args[0]:
+            target_voice = args[1]
+            offset = args[2]
+            target_position = note.piece.play_count%target_voice.line_length - offset%target_voice.line_length
+            note.duration = target_voice.line.note_list[target_position].duration
+            note.amplitude = target_voice.line.note_list[target_position].amplitude
+            note.on_off = target_voice.line.note_list[target_position].on_off
+            note.frequency = target_voice.line.note_list[target_position].frequency
 
     def execute_rule(self, note):
         #self.execution_count += 1

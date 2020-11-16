@@ -1,6 +1,8 @@
 from random import choice
 from classes import *
 import ctcsound
+from datetime import datetime
+import os
 
 # TASKS
     # Alignment at start, center, or end of section
@@ -24,12 +26,9 @@ def main():
     # Piece takes # melody, # rhythm, # bass
 
     piece = Piece(melody_voices=4, drum_voices=3, bass_voices=1)
-    output = piece.perform()
+    score = piece.perform()
 
-    print(output)
-
-    #csnd_ochrestra = open("orchestra.orc","r")
-    #csd = csnd_ochrestra.read()
+    print(score)
 
     with open("orchestra.orc","r") as csnd_orchestra:
         csd = ""
@@ -37,7 +36,7 @@ def main():
             csd += line
 
     cs = ctcsound.Csound()
-    csd = csd + output + '''
+    csd = csd + score + '''
 
     s
     i 1 0 1 0 0 0
@@ -52,5 +51,20 @@ def main():
         cs.start()
         cs.perform()
         cs.reset()
+
+    title_chars=["a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p","q","r","s","t","u","v","w","x","y","z","1","2","3","4","5","6","7","8","9","1","2","3","4","5","6","7","8","9"]
+    title = ""
+    for i in range(7):
+        title += choice(title_chars)
+    date = datetime.today().strftime('%Y_%m_%d')
+    if not os.path.exists(f"output/{date}"):
+        os.makedirs(f"output/{date}")
+    path = f"output/{date}/"
+    filename = f"{date}_{title}.csd"
+    print(filename)
+
+    with open(f"{path}{filename}", "w") as f:
+        f.write(csd)
+    f.close()
 
 main()

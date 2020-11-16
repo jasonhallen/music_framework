@@ -50,7 +50,7 @@ instr 102 ; B3 ORGAN
 
     kenv adsr 0.001,0.1,0.7,0.1
     kvdpth line 0, p3, 0.1
-    asig   fmb3 kenv*p4*1.3, kfreq, kc1, kc2, kvdpth, kvrate
+    asig   fmb3 kenv*p4*2, kfreq, kc1, kc2, kvdpth, kvrate
     chnmix asig, "mixl"
 	chnmix asig, "mixr"
 endin

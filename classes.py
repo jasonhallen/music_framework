@@ -63,9 +63,9 @@ class Piece:
         section_rules = []
         output = "t 0 360\n"
         section_number = 0
-        #print([instrument for instrument in [self.voice_list])
-        while section_number < 20:
-            section_length = 8*randrange(4,5)
+        print([instrument for instrument in self.voice_list])
+        while section_number < 12:
+            section_length = 8*randrange(1,10)
             print(f"Section {section_number}, {section_length} beats long")
             section_rules = []
             section_rules.append(choice([None, self._set_mode]))
@@ -76,42 +76,21 @@ class Piece:
             note_rules = self.rule_engine.select_section_rules()
             for i in range(len(note_rules)):
                 print(f"{str(note_rules[i])}, {note_rules[i].arguments}")
-            #note_rules.append(Rule(choice([[self.mimic,(choice(self.voice_list),choice(self.voice_list))],[self.evolve,(0.7,)]])))
 
-            #copier_voice = choice(self.voice_list)
-            #target_voice = choice(self.voice_list)
-
-            # self.rule_list.select_section_rules()
-            # output += choice(options)(section_length)
-            # self.mode = self._set_mode()
-            # output += f"; {str(note_rules[0])}\n\n"
             for __ in range(section_length):
                 for i in range(len(self.voice_list)):
                     note = self.voice_list[i].line.note_list[self.play_count%self.voice_list[i].line_length]
-                    # Fire rules in the rule_list
 
+                    # Fire rules in the rule_list
                     for __ in range(len(note_rules)):
                         if note_rules[0]:
                             note_rules[0].execute_rule(note)
-                    #self.mimic(note, copier_voice, target_voice)
 
                     output += note._play()
                 self.play_count += 1
             section_number += 1
-        return output #choice(options)(section_length)
+        return output
 
-    # def evolve(self, note, prob):
-        # note._evolve(prob[0])
-    #
-    # def mimic(self, note, args):
-    #     """Turn note into target_voice note"""
-    #     copier_voice = args[0]
-    #     target_voice = args[1]
-    #     if note.voice == copier_voice:
-    #         note.duration = target_voice.line.note_list[self.play_count%target_voice.line_length].duration
-    #         note.amplitude = target_voice.line.note_list[self.play_count%target_voice.line_length].amplitude
-    #         note.on_off = target_voice.line.note_list[self.play_count%target_voice.line_length].on_off
-    #         note.frequency = target_voice.line.note_list[self.play_count%target_voice.line_length].frequency
 
 class Voice:
     """A class used to represent an instrument part."""
@@ -139,16 +118,11 @@ class Voice:
 
     def __str__(self):
         """Return string representation."""
-        return f'Name:{self.name}, Csnd Inst:{self.csnd_instrument}'
+        return f'{self.name}|{self.csnd_instrument}|Busyness:{self.busyness}'
 
     def __repr__(self):
         """Return string representation."""
         return self.__str__()
-
-    #def play(self):
-    #    """Play Voice's line."""
-    #    output, self.play_count = self.line._play(self.csnd_instrument, self.play_count)
-    #    return output
 
 
 class Line:
