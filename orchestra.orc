@@ -36,7 +36,7 @@ instr 101 ; ORGAN
     a7     oscili 1/43,  10.0794 * ifrq
     a8     oscili 1/43,  11.9864 * ifrq
     a9     oscili 4/43,  16      * ifrq
-    asig = kenv*p4*0.8*(a1+a2+a3+a4+a5+a6+a7+a8+a9)
+    asig = kenv*p4*0.7*(a1+a2+a3+a4+a5+a6+a7+a8+a9)
     chnmix asig, "mixl"
     chnmix asig, "mixr"
 endin
@@ -120,6 +120,8 @@ endin
 
 instr 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72 ; DRUMS
     p3=4
+    p5 = p5
+    p6 = p6
 	if ftchnls(p1) == 1 then
 		asigl loscil p4, 1, p1, 1, 0
 		asigr = asigl

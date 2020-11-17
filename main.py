@@ -52,6 +52,8 @@ def main():
         cs.perform()
         cs.reset()
 
+    # class_names = ("jason", "james", "aishee", "aldo", "ben", "cat", "cole", "edward", "eric", "henry", "jack d.", "jack r.", "john", "junyi", "kaeden", "kate", "peter", "piper", "rebecca", "rie", "sam", "starr", "vic", "yasmeen", "yemi")
+    
     title_chars=["a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p","q","r","s","t","u","v","w","x","y","z","1","2","3","4","5","6","7","8","9","1","2","3","4","5","6","7","8","9"]
     title = ""
     for i in range(7):
