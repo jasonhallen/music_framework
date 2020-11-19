@@ -8,11 +8,10 @@ class Piece:
 
     def __init__(self, melody_voices, drum_voices, bass_voices):
         """Initialize the piece of music"""
-        self.mode = None
-        self._set_mode()
+        self.mode = Mode()
         self.offset = self._set_offset()
         self.max_line_length = 48
-        self.measure_lengths = choice([[8,12,16,20,24,28,32]])
+        self.measure_lengths = [8,12,16,20,24] #[num for num in range(8,33)]
         self.melody_voices = melody_voices
         self.drum_voices = drum_voices
         self.bass_voices = bass_voices
@@ -20,20 +19,7 @@ class Piece:
         self.play_count = 0
         self.rule_engine = RuleEngine(self)
         self.swing_offset = random()/4
-
-    def _set_mode(self):
-        scale = [0.00, 0.02, 0.04, 0.05, 0.07, 0.09, 0.11]
-        weights = [[(0,3),(2,2),(4,2)],[(0,3),(2,2),(4,2),(6,2)]]
-        for __ in range(randrange(0,7)):
-            scale.append(scale[0])
-            scale = scale[1:]
-        scale_position_list = [item for item in range(len(scale))]
-        for tuple in choice(weights):
-            for __ in range(tuple[1]):
-                scale_position_list.append(tuple[0])
-        # print(scale)
-        # print(scale_position_list)
-        self.mode = (scale, scale_position_list)
+        self.max_sections = randrange(15,25)
 
     def _set_offset(self):
         return choice(["-0.92","-0.91","-0.9","-0.89","+0.06","+0.05","+0.04","+0.03","+0.02","+0.01","+0"])
@@ -63,29 +49,26 @@ class Piece:
         return Voice(name, csnd_instrument, register, line_length, self)
 
     def perform(self):
-        # section_rules = []
-        output = "t 0 360\n"
+        tempo = randrange(300,360)
+        output = f"t 0 {tempo}\n"
         section_number = 0
         print("INSTRUMENTS")
         [print(instrument) for instrument in self.voice_list]
         print()
-        while section_number < 12:
-            section_length = 8*randrange(1,10)
+        section_rules = [[],[]]
+
+        while not any(rule.function == Rule.end for rule in section_rules[0]):
+            section_length = randrange(16,80)
+            print()
             print(f"SECTION {section_number} - {section_length} beats long")
-            section_rules = self.rule_engine.select_section_rules()
-            # section_rules.append(choice([None, self._set_mode]))
-            # if section_rules[0][0]:
-            #     section_rules[0][0].execute_rule(None)
-            #     print("Chord change")
+            print()
+            section_rules = self.rule_engine.select_section_rules(section_number)
 
-            for __ in range(len(section_rules[0])):
+            print()
+            print("EXECUTED")
+            for rule in range(len(section_rules[0])):
                 if section_rules[0][0]:
-                    section_rules[0][0].execute_rule(None)
-
-            # note_rules = self.rule_engine.select_section_rules()
-            # self.rule_engine.select_section_rules()
-            for i in range(len(section_rules[1])):
-                print(f"{str(section_rules[1][i])}, {section_rules[1][i].arguments}")
+                    section_rules[0][rule].execute_rule(None)
             print()
 
             for __ in range(section_length):
@@ -99,8 +82,43 @@ class Piece:
 
                     output += note._play()
                 self.play_count += 1
+
+            [print(instrument) for instrument in self.voice_list]
             section_number += 1
         return output
+
+class Mode:
+    """A class to represent the mode"""
+
+    def __init__(self):
+        self.tonic = randrange(0,6)
+        self.scale = [0.00, 0.02, 0.04, 0.05, 0.07, 0.09, 0.11]
+        self.chord_position = 0
+        self.scale_position_list = self.expand_scale()
+
+    def __repr__(self):
+        return str(self.scale_position_list)
+
+    def expand_scale(self):
+        scale_position_list = [item for item in range(len(self.scale))]
+        for chord_voicing in choice([[(0,3),(2,2),(4,2)],
+        [(0,2),(2,3),(4,3)],
+        [(0,3),(2,2),(4,2),(6,2)],
+        [(2,4),(4,6)]]):
+            for __ in range(chord_voicing[1]):
+                scale_position_list.append((chord_voicing[(0)]+self.tonic+self.chord_position)%len(self.scale))
+        return scale_position_list
+
+    def set_chord(self):
+        chord_choices = [[1,2,2,3,3,4,4,4,4,5,6],
+        [0,0,0,0,2,2,3,3,4,4,4,5,6],
+        [0,1,3,3,3,3,4,4,5,5,5,6],
+        [0,0,0,0,0,1,2,2,4,4,4,5,6],
+        [0,0,0,0,0,1,2,2,2,2,3,3,5,5,5,6],
+        [0,0,0,1,2,2,3,3,3,3,4,4,4,6],
+        [0,0,1,1,1,2,2,3,3,4,4,4,5]]
+        self.chord_position = choice(chord_choices[self.chord_position])
+        self.scale_position_list = self.expand_scale()
 
 
 class Voice:
@@ -126,11 +144,12 @@ class Voice:
         self.piece = piece
         self.line = Line(self, piece)
         self.rule_list = []
+        self.mute = 1
         # self.play_count = 0
 
     def __str__(self):
         """Return string representation."""
-        return f'{self.name}|{self.csnd_instrument}|Busyness:{self.busyness}'
+        return f'{self.name}|{self.csnd_instrument}|Mute:{self.mute}|Busyness:{round(self.busyness,3)}'
 
     def __repr__(self):
         """Return string representation."""
@@ -193,7 +212,7 @@ class Note:
         self.duration = choice([0.5,0.5,0.5,1,1,1,1,1,3,3,3,6])
         self.amplitude = choice([0.3,0.5,0.7,0.9])
         self.on_off = self._set_on_off()
-        self.scale_position = choice(self.piece.mode[1])
+        self.scale_position = choice(self.piece.mode.scale_position_list)
         self.frequency = self._set_frequency()
 
     def __str__(self):
@@ -211,7 +230,7 @@ class Note:
             return 0
 
     def _set_frequency(self):
-        return f"{self.voice.register} + {self.piece.mode[0][self.scale_position]} {self.piece.offset}"
+        return f"{self.voice.register} + {self.piece.mode.scale[self.scale_position]} {self.piece.offset}"
 
     def _play(self):
         """Return Csound note event"""
@@ -219,8 +238,10 @@ class Note:
             swing_offset = self.piece.swing_offset
         else:
             swing_offset = 0
-
-        output = f"i {self.voice.csnd_instrument} [{self.piece.play_count} + {swing_offset}] {self.duration} [{self.amplitude}*{self.on_off}/8] [{self.frequency}] ;{self.piece.mode}" + "\n"
+        if self.on_off != 0 and self.voice.mute != 0:
+            output = f"i {self.voice.csnd_instrument} [{self.piece.play_count} + {swing_offset}] {self.duration} [{self.amplitude}*{self.on_off}*{self.voice.mute}/8] [{self.frequency}] ;{self.piece.mode}" + "\n"
+        else:
+            output = ""
         return output
 
     def _evolve(self, prob):
