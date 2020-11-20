@@ -1,5 +1,6 @@
-from random import choice
-from classes import *
+from random import choice, randrange, random, sample
+from classes import Piece
+# from rules import *
 import ctcsound
 from datetime import datetime
 import os

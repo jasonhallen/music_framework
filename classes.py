@@ -11,7 +11,7 @@ class Piece:
         self.mode = Mode()
         self.offset = self._set_offset()
         self.max_line_length = 48
-        self.measure_lengths = [8,12,16,20,24] #[num for num in range(8,33)]
+        self.measure_lengths = [8,12,16,20,24,28,32] #[num for num in range(8,33)]
         self.melody_voices = melody_voices
         self.drum_voices = drum_voices
         self.bass_voices = bass_voices
@@ -58,6 +58,10 @@ class Piece:
         section_rules = [[],[]]
 
         while not any(rule.function == Rule.end for rule in section_rules[0]):
+            # self.rule_engine.update()
+            # apply section rules
+            # play through notes, apply note rules
+
             section_length = randrange(16,80)
             print()
             print(f"SECTION {section_number} - {section_length} beats long")
@@ -184,8 +188,11 @@ class Line:
         """Generate a list of notes"""
         note_list = []
         for i in range(self.voice.line_length):
-            note_list.append(Note(self.piece, self.voice))
+            note_list.append(self._generate_note())
         return note_list
+
+    def _generate_note(self):
+        return Note(self.piece, self.voice)
 
     #def _play(self, csnd_instrument, play_count):
     #    output = ""

@@ -1,4 +1,5 @@
 from random import choice, randrange, random, sample
+# from classes import Note
 
 class RuleEngine():
     """Determines which rules to apply to piece"""
@@ -6,15 +7,36 @@ class RuleEngine():
     def __init__(self, piece):
         self.rule_list = []
         self.piece = piece
+        self.section_number = 0
+        self.section_length = 0
+
+    def update(self):
+        # for all rules in rule_list check the note_span and execution_count
+        for level in self.rule_list:
+            for rule in level:
+                if rule.execution_count == rule.note_span:
+                    level.remove(rule)
+
+        if self.piece.play_count == something or self.piece.play_count == 0:
+            self.section_length = randrange(16,80)
+            print()
+            print(f"SECTION {self.section_number} - {section_length} beats long")
+            print()
+            self.select_section_rules(section_number)
+            section_number += 1
+        # remove any expired rules
+            # if any note_span == exectution_count delete
+        # generate any new rules
+        pass
 
     def select_section_rules(self, section_number):
         """Return a list of Rules to apply to a section of Notes"""
-
+        #
         self.rule_list = [[],[]]
         rule = 0
         print("RULE TESTING")
         while rule != None:
-            rule = choice([Rule.evolve_constructor(self.rule_list),
+            rule = choice([Rule.evolve_constructor(self.piece, self.rule_list),
             Rule.mimic_constructor(self.piece, self.rule_list),
             Rule.chordchange_constructor(self.piece, self.rule_list, section_number),
             Rule.mute_constructor(self.piece, self.rule_list),
@@ -23,6 +45,8 @@ class RuleEngine():
             Rule.morebusy_constructor(self.piece, self.rule_list),
             Rule.lessbusy_constructor(self.piece, self.rule_list),
             Rule.resetbusy_constructor(self.piece, self.rule_list),
+            Rule.growline_constructor(self.piece, self.rule_list),
+            Rule.shrinkline_constructor(self.piece, self.rule_list),
             Rule.end_constructor(self.piece, self.rule_list, section_number),
             None]) #Rule.transpose_constructor(self.piece)
             if rule != None:
@@ -44,7 +68,6 @@ class Rule():
     # RULES
         # EVOLVE TO
         # EVOLVE TO ALL (UNISON)
-        # MIMIC ALL
         # CHANGE LINE LENGTH
 
     # MOVEMENTS
@@ -59,8 +82,9 @@ class Rule():
         self.preconditions = preconditions
         self.precedence = precedence
         self.level = level
+        self.note_span = 0 #note_span
+        self.execution_count = 0
         #self.prob = 1
-        #self.execution_count = 0
 
     def __str__(self):
         """Return string representation"""
@@ -91,21 +115,22 @@ class Rule():
                 Rule.transpose(self,note,(voice,transpose_interval))
 
     @classmethod
-    def evolve_constructor(cls, rule_list):
+    def evolve_constructor(cls, piece, rule_list):
         function = cls.evolve
-        args = (randrange(7,11)/10,)
+        args = (sample(piece.voice_list,randrange(1,len(piece.voice_list)+1)), randrange(7,11)/10)
         level = 1
         precedence = 0
         preconditions = not any(rule.function == cls.evolve for rule in rule_list[level])
         return cls(function, args, preconditions, precedence, level)
 
     def evolve(self, note, args):
-        note._evolve(args[0])
+        if note.voice in args[0]:
+            note._evolve(args[1])
 
     @classmethod
     def mimic_constructor(cls, piece, rule_list):
         function = cls.mimic
-        args = (sample(piece.voice_list,randrange(2,len(piece.voice_list)+1)),choice([0,randrange(0,5)]))
+        args = (sample(piece.voice_list,randrange(1,len(piece.voice_list)+1)),choice([0,randrange(0,5)]))
         level = 1
         precedence = 1
         preconditions = not any((rule.function == cls.mimic) for rule in rule_list[level]) #args[0] != args[1]
@@ -238,6 +263,45 @@ class Rule():
         old_busy_value = voice.busyness
         voice.busyness = voice.busyness/1.2
         print(f"LESSBUSY {voice}: old = {old_busy_value}, new = {voice.busyness}")
+
+    @classmethod
+    def growline_constructor(cls, piece, rule_list):
+        function = cls.growline
+        args = (choice(piece.voice_list),)
+        level = 0
+        precedence = 3
+        preconditions = not any((rule.function == cls.growline or rule.function == cls.shrinkline) and rule.arguments[0] == args[0] for rule in rule_list[level]) and args[0].line_length != piece.measure_lengths[-1]
+        return cls(function, args, preconditions, precedence, level)
+
+    def growline(self, note, args):
+        """Transpose a note frequency"""
+        voice = args[0]
+        old_line_length = voice.line_length
+        voice.line_length = choice([length for length in voice.piece.measure_lengths if length > old_line_length])
+        # from classes import Note
+        for i in range(voice.line_length - old_line_length):
+            voice.line.note_list.append(voice.line._generate_note())
+
+        print(f"GROWLINE {voice}: old = {old_line_length}, new = {voice.line_length}")
+
+    @classmethod
+    def shrinkline_constructor(cls, piece, rule_list):
+        function = cls.shrinkline
+        args = (choice(piece.voice_list),)
+        level = 0
+        precedence = 3
+        preconditions = not any((rule.function == cls.shrinkline or rule.function == cls.growline) and rule.arguments[0] == args[0] for rule in rule_list[level]) and args[0].line_length != piece.measure_lengths[0]
+        return cls(function, args, preconditions, precedence, level)
+
+    def shrinkline(self, note, args):
+        """Transpose a note frequency"""
+        voice = args[0]
+        old_line_length = voice.line_length
+        voice.line_length = choice([length for length in voice.piece.measure_lengths if length < old_line_length])
+
+        voice.line.note_list = voice.line.note_list[:-(old_line_length - voice.line_length)]
+
+        print(f"SHRINKLINE {voice}: old = {old_line_length}, new = {voice.line_length}")
 
     @classmethod
     def end_constructor(cls, piece, rule_list, section_number):
