@@ -19,7 +19,7 @@ class Piece:
         self.play_count = 0
         self.rule_engine = RuleEngine(self)
         self.swing_offset = random()/4
-        self.max_sections = randrange(15,25)
+        self.max_sections = randrange(5,15)
 
     def _set_offset(self):
         return choice(["-0.92","-0.91","-0.9","-0.89","+0.06","+0.05","+0.04","+0.03","+0.02","+0.01","+0"])
@@ -49,46 +49,49 @@ class Piece:
         return Voice(name, csnd_instrument, register, line_length, self)
 
     def perform(self):
-        tempo = randrange(300,360)
+        tempo = randrange(300,450)
         output = f"t 0 {tempo}\n"
-        section_number = 0
+        # section_number = 0
         print("INSTRUMENTS")
         [print(instrument) for instrument in self.voice_list]
         print()
-        section_rules = [[],[]]
+        # section_rules = [[],[]]
 
-        while not any(rule.function == Rule.end for rule in section_rules[0]):
-            # self.rule_engine.update()
+        while not any(rule.function == Rule.end for rule in self.rule_engine.rule_list[0]):
+            self.rule_engine.update_rules()
             # apply section rules
             # play through notes, apply note rules
 
-            section_length = randrange(16,80)
-            print()
-            print(f"SECTION {section_number} - {section_length} beats long")
-            print()
-            section_rules = self.rule_engine.select_section_rules(section_number)
-
-            print()
-            print("EXECUTED")
-            for rule in range(len(section_rules[0])):
-                if section_rules[0][0]:
-                    section_rules[0][rule].execute_rule(None)
+            # section_length = randrange(16,80)
+            # print()
+            # print(f"SECTION {section_number} - {section_length} beats long")
+            # print()
+            # section_rules = self.rule_engine.select_section_rules(section_number)
+            print(self.rule_engine.rule_list)
             print()
 
-            for __ in range(section_length):
-                for i in range(len(self.voice_list)):
-                    note = self.voice_list[i].line.note_list[self.play_count%self.voice_list[i].line_length]
+            if any(rule.function == Rule.end for rule in self.rule_engine.rule_list[0]):
+                break
 
-                    # Fire rules in the rule_list
-                    for __ in range(len(section_rules[1])):
-                        if section_rules[1][0]:
-                            section_rules[1][0].execute_rule(note)
+            for rule in self.rule_engine.rule_list[0]:
+                if rule.execution_count == 0:
+                    rule.execute_rule(None)
+            print()
 
-                    output += note._play()
-                self.play_count += 1
+            for voice in self.voice_list:
+                note = voice.line.note_list[self.play_count%voice.line_length]
 
-            [print(instrument) for instrument in self.voice_list]
-            section_number += 1
+                # Fire rules in the rule_list
+                for rule in self.rule_engine.rule_list[1]:
+                    if rule:
+                        rule.execute_rule(note)
+
+                output += note._play()
+            self.play_count += 1
+            print(self.play_count)
+
+            # [print(instrument) for instrument in self.voice_list]
+            # section_number += 1
         return output
 
 class Mode:
