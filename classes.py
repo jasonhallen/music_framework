@@ -19,7 +19,8 @@ class Piece:
         self.play_count = 0
         self.rule_engine = RuleEngine(self)
         self.swing_offset = random()/4
-        self.max_sections = randrange(5,15)
+        self.max_sections = randrange(25,50)
+        self.section_list = []
 
     def _set_offset(self):
         return choice(["-0.92","-0.91","-0.9","-0.89","+0.06","+0.05","+0.04","+0.03","+0.02","+0.01","+0"])
@@ -33,7 +34,10 @@ class Piece:
 
         drum_kit = choice(elements.drum_instruments)
         for __ in range(self.drum_voices):
-            voice_list.append(self._construct_voice(drum_kit))
+            test_inst = self._construct_voice(drum_kit)
+            while any(voice for voice in voice_list if voice.csnd_instrument == test_inst.csnd_instrument):
+                test_inst = self._construct_voice(drum_kit)
+            voice_list.append(test_inst)
 
         for __ in range(self.bass_voices):
             voice_list.append(self._construct_voice(choice(elements.bass_instruments)))
@@ -49,9 +53,10 @@ class Piece:
         return Voice(name, csnd_instrument, register, line_length, self)
 
     def perform(self):
-        tempo = randrange(300,450)
+        tempo = randrange(300,360)
         output = f"t 0 {tempo}\n"
         # section_number = 0
+        print(f"MAX SECTIONS: {self.max_sections}")
         print("INSTRUMENTS")
         [print(instrument) for instrument in self.voice_list]
         print()

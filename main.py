@@ -44,29 +44,29 @@ def main(title=None):
     </CsScore>
     </CsoundSynthesizer>
     '''
-    cs = ctcsound.Csound()
-    ret = cs.compileCsdText(csd)
-    if ret == ctcsound.CSOUND_SUCCESS:
-        cs.start()
-        cs.perform()
-        cs.reset()
+    # cs = ctcsound.Csound()
+    # ret = cs.compileCsdText(csd)
+    # if ret == ctcsound.CSOUND_SUCCESS:
+    #     cs.start()
+    #     cs.perform()
+    #     cs.reset()
+    #
+    # title_chars=["a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p","q","r","s","t","u","v","w","x","y","z","1","2","3","4","5","6","7","8","9","1","2","3","4","5","6","7","8","9"]
+    # title = ""
+    #
+    # for i in range(7):
+    #     title += choice(title_chars)
+    # date = datetime.today().strftime('%Y_%m_%d')
+    # if not os.path.exists(f"output/{date}"):
+    #     os.makedirs(f"output/{date}")
+    # path = f"output/{date}/"
+    # filename = f"{date}_{title}.csd"
+    # print(filename)
 
-    title_chars=["a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p","q","r","s","t","u","v","w","x","y","z","1","2","3","4","5","6","7","8","9","1","2","3","4","5","6","7","8","9"]
-    title = ""
-
-    for i in range(7):
-        title += choice(title_chars)
-    date = datetime.today().strftime('%Y_%m_%d')
-    if not os.path.exists(f"output/{date}"):
-        os.makedirs(f"output/{date}")
-    path = f"output/{date}/"
-    filename = f"{date}_{title}.csd"
-    print(filename)
-
-    # if not os.path.exists("output/class"):
-    #     os.makedirs("output/class")
-    # path = "output/class"
-    # filename = f"{title}.csd"
+    if not os.path.exists("output/class"):
+        os.makedirs("output/class")
+    path = "output/class"
+    filename = f"{title}.csd"
 
     with open(f"{path}/{filename}", "w") as f:
         f.write(csd)
@@ -80,5 +80,5 @@ def generate_class():
         title = class_names[i]
         main(title)
 
-main()
-#generate_class()
+#main()
+generate_class()
