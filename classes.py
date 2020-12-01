@@ -103,8 +103,8 @@ class Mode:
     """A class to represent the mode"""
 
     def __init__(self):
-        self.tonic = randrange(0,6)
-        self.scale = [0.00, 0.02, 0.04, 0.05, 0.07, 0.09, 0.11]
+        self.scale =  [0.00, 0.02, 0.04, 0.05, 0.07, 0.09, 0.11] #[0.00, 0.02, 0.04, 0.06, 0.08, 0.10, 0.12]
+        self.tonic = randrange(0,(len(self.scale)))
         self.chord_position = 0
         self.scale_position_list = self.expand_scale()
 

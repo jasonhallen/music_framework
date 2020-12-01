@@ -53,33 +53,39 @@ class RuleEngine():
             self.rule_list[rule.level].append(rule)
             rule_number += 1
         print(f"Rule Number: {rule_number}")
-        while rule_count != rule_number:
-        #while rule != None:
-            rule = choice([Rule.evolve_constructor(self),
+        attempts = 0
+        while rule_count != rule_number and attempts < 100:
+        # while rule != None:
+            rule = choice([
+            Rule.evolve_constructor(self),
             Rule.mimic_constructor(self),
-            Rule.chordchange_constructor(self),
+            # Rule.chordchange_constructor(self),
             Rule.mute_constructor(self),
             Rule.unmute_constructor(self),
             Rule.unmuteall_constructor(self),
+            Rule.movement_morevoices_constructor(self),
+            Rule.movement_lessvoices_constructor(self),
             Rule.morebusy_constructor(self),
             Rule.lessbusy_constructor(self),
+            Rule.movement_morebusy_constructor(self),
+            Rule.movement_lessbusy_constructor(self),
             Rule.resetbusy_constructor(self),
             Rule.growline_constructor(self),
             Rule.shrinkline_constructor(self),
-            Rule.retrievelines_constructor(self),
-            Rule.end_constructor(self),
-            Rule.movement_morebusy_constructor(self),
-            Rule.movement_lessbusy_constructor(self),
-            Rule.movement_morevoices_constructor(self),
-            Rule.movement_lessvoices_constructor(self),
             Rule.movement_growlines_constructor(self),
             Rule.movement_shrinklines_constructor(self),
-            None]) #Rule.transpose_constructor(self.piece)
+            Rule.retrievelines_constructor(self),
+            Rule.end_constructor(self),
+            None
+            ]) #Rule.transpose_constructor(self.piece)
             if rule != None:
                 print(f"{rule} - {rule.preconditions} - {rule.arguments}")
                 if rule.preconditions and random()<=rule.prob:
                     self.rule_list[rule.level].append(rule)
                     rule_count += 1
+            attempts += 1
+            # else:
+            #     rule_count += 1
         self.rule_list[0].sort(key=lambda x: x.precedence)
         self.rule_list[1].sort(key=lambda x: x.precedence)
         # print()
