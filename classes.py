@@ -1,5 +1,6 @@
 from random import choice, random, randrange
 import elements
+import math
 from rules import *
 
 
@@ -11,15 +12,16 @@ class Piece:
         self.mode = Mode()
         self.offset = self._set_offset()
         self.max_line_length = 48
-        self.measure_lengths = [8,12,16,20,24,28,32] #[num for num in range(8,33)]
+        self.measure_lengths = [8,16,24,32] #[num for num in range(8,33)]
         self.melody_voices = melody_voices
         self.drum_voices = drum_voices
         self.bass_voices = bass_voices
+        self.amp_scale = 0.8**(melody_voices+drum_voices+bass_voices-1)#math.sqrt(melody_voices+drum_voices+bass_voices)
         self.voice_list = self._set_voices()
         self.play_count = 0
         self.rule_engine = RuleEngine(self)
         self.swing_offset = random()/4
-        self.max_sections = randrange(25,50)
+        self.max_sections = randrange(5,6)
         self.section_list = []
 
     def _set_offset(self):
@@ -224,8 +226,8 @@ class Note:
         """Initialize a Note object"""
         self.piece = piece
         self.voice = voice
-        self.duration = choice([0.5,0.5,0.5,1,1,1,1,1,3,3,3,6])
-        self.amplitude = choice([0.3,0.5,0.7,0.9])
+        self.duration = choice([0.5,0.5,0.5,0.5,1,1,1,1,1,3,3,3,6])
+        self.amplitude = choice([0.5,0.6,0.7,0.8,0.9])
         self.on_off = self._set_on_off()
         self.scale_position = choice(self.piece.mode.scale_position_list)
         self.frequency = self._set_frequency()
@@ -254,7 +256,7 @@ class Note:
         else:
             swing_offset = 0
         if self.on_off != 0 and self.voice.mute != 0:
-            output = f"i {self.voice.csnd_instrument} [{self.piece.play_count} + {swing_offset}] {self.duration} [{self.amplitude}*{self.on_off}*{self.voice.mute}/8] [{self.frequency}] ;{self.piece.mode}" + "\n"
+            output = f"i {self.voice.csnd_instrument} [{self.piece.play_count} + {swing_offset}] {self.duration} [{self.amplitude}*{self.on_off}*{self.voice.mute}] [{self.frequency}] {self.piece.amp_scale} ;{self.piece.mode}" + "\n"
         else:
             output = ""
         return output

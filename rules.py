@@ -25,7 +25,7 @@ class RuleEngine():
         # if self.section_play_count == self.section_length:
         if self.section_play_count == self.section_length:
             self.section_play_count = 0
-            self.section_length = randrange(8,64)
+            self.section_length = randrange(8,64) #8,64
             print()
             print(f"SECTION {self.section_number} - {self.section_length} beats long")
             print(self.rule_list)

@@ -25,7 +25,7 @@ import os
 def main(title=None):
 
     # Piece takes # melody, # rhythm, # bass
-    piece = Piece(melody_voices=4, drum_voices=3, bass_voices=0)
+    piece = Piece(melody_voices=4, drum_voices=3, bass_voices=1)
     score = piece.perform()
 
     print(score)
