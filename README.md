@@ -1,3 +1,10 @@
 # Music Framework
 
-Testing out a change on the add_gui branch
+## Vision
+* Real-time interactive algorithmic music generator
+* Improvise live compositions
+* Compositions will have an internal continuity by referring to themselves
+* Incorporate live vocals and other instrumentation
+
+## Tasks
+* Too many to list
