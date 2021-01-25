@@ -1,10 +1,10 @@
 <CsoundSynthesizer>
 <CsOptions>
--odac
+-+rtaudio=coreaudio -odac
 </CsOptions>
 <CsInstruments>
 sr = 44100
-ksmps = 10
+ksmps = 64
 0dbfs = 1
 nchnls = 2
 
@@ -19,8 +19,8 @@ instr 100 ; STRING PLUCK
     aSig	wgpluck2  0.58, p4, cpspch(p5), iPlk, irefl	; generate Karplus-Strong plucked string audio
     kcf	expon	cpsoct(rnd(6)+6),p3,50				; filter cutoff frequency envelope
     aSig	clfilt	aSig, kcf, 0, 2					; butterworth lowpass filter
-    chnmix aSig*aEnv*2, "mixl"
-	chnmix aSig*aEnv*2, "mixr"
+    chnmix aSig*aEnv*1*p6, "mixl"
+	chnmix aSig*aEnv*1*p6, "mixr"
 endin
 
 instr 101 ; ORGAN
@@ -37,8 +37,8 @@ instr 101 ; ORGAN
     a8     oscili 1/43,  11.9864 * ifrq
     a9     oscili 4/43,  16      * ifrq
     asig = kenv*p4*0.6*(a1+a2+a3+a4+a5+a6+a7+a8+a9)
-    chnmix asig, "mixl"
-    chnmix asig, "mixr"
+    chnmix asig*p6*0.5, "mixl"
+    chnmix asig*p6*0.5, "mixr"
 endin
 
 instr 102 ; B3 ORGAN
@@ -51,8 +51,8 @@ instr 102 ; B3 ORGAN
     kenv madsr 0.001,0.1,0.7,0.1
     kvdpth line 0, p3, 0.1
     asig   fmb3 kenv*p4*2.3, kfreq, kc1, kc2, kvdpth, kvrate
-    chnmix asig, "mixl"
-	chnmix asig, "mixr"
+    chnmix asig*p6*0.7, "mixl"
+	chnmix asig*p6*0.7, "mixr"
 endin
 
 instr 103 ; FLUTE
@@ -87,7 +87,7 @@ instr 105 ; RHODES
     seed 0
     ;p3=p4
     kfreq = cpspch(p5)
-    kc1 = int(random(6,30))
+    kc1 = int(random(1,6))
     kc2 = 0
     kvdepth = 0.4
     kvrate = 3
@@ -96,10 +96,11 @@ instr 105 ; RHODES
     ifn3 = -1
     ifn4 = 53
     ivfn = -1
-    kenv expseg 0.001,0.01,p4+0.001,p3-0.02,p4+0.001,0.01,0.001
+    ;kenv expseg 0.00001,0.01,p4,p3-0.11,p4,0.1,0.00001
+    kenv linseg 0,0.01,p4,p3-0.11,p4,0.1,0
     asig fmrhode kenv, kfreq, kc1, kc2, kvdepth, kvrate, ifn1, ifn2, ifn3, ifn4, ivfn
-    chnmix asig*0.8, "mixl"
-	chnmix asig*0.8, "mixr"
+    chnmix asig*p6*0.5, "mixl"
+	chnmix asig*p6*0.5, "mixr"
 endin
 
 instr 106 ; MARIMBA
@@ -112,10 +113,111 @@ instr 106 ; MARIMBA
     ivibfn = 2
     idec = 0.6
 
-    asig marimba p4*8, ifreq, ihrd, ipos, imp, kvibf, kvamp, ivibfn, idec, 0.001, 0.001
+    asig marimba p4*1, ifreq, ihrd, ipos, imp, kvibf, kvamp, ivibfn, idec, 0.001, 0.001
 
-    chnmix asig, "mixl"
-    chnmix asig, "mixr"
+    chnmix asig*p6*3, "mixl"
+    chnmix asig*p6*3, "mixr"
+endin
+
+instr 107 ; MOOG
+    ;ktrig = (release() == 1 ? 0 : 1)
+    ifreq = cpspch(p5)
+    iatt1 = 0.01
+    idec1 = 0.1
+    isus1 = 0.8
+    irel1 = 0.1
+    kenv1 madsr iatt1,idec1,isus1,irel1 ;ADSR p4,iatt1,idec1,isus1,irel1,ktrig
+    iatt2 = 0.1
+    idec2 = 0.2
+    isus2 = 0.4
+    irel2 = 0.05
+    kenv2 madsr iatt2,idec2,isus2,irel2 ;ADSR 1,iatt2,idec2,isus2,irel2,ktrig
+    a1 vco2 1/3, ifreq
+    a2 vco2 1/3, ifreq*1.005
+    a3 vco2 1/3, ifreq*.995
+    a4 moogladder a1+a2+a3, ifreq*6*(1+kenv2), 0.7
+    asig = a4*kenv1*p4*1.8
+
+    chnmix asig*p6, "mixl"
+    chnmix asig*p6, "mixr"
+endin
+
+opcode VocBand,a,aakk
+    as,an,kf,kbw xin
+    xout(balance(butterbp(butterbp(as,kf,kbw),kf,kbw),butterbp(butterbp(an,kf,kbw),kf,kbw)))
+endop
+
+opcode Vocoder,a,aakkkpp
+    as,an,kmin,kmax,kq,ibnd,icnt xin
+    if kmax < kmin then
+        ktemp = kmin
+        kmin = kmax
+        kmax = ktemp
+    endif
+    if kmin == 0 then
+        kmin = 1
+    endif
+    if (icnt >= ibnd) goto bank
+        abnd Vocoder as,an,kmin,kmax,kq,ibnd,icnt+1
+    bank:
+        kfreq = kmin*(kmax/kmin)^((icnt-1)/(ibnd-1))
+        kbw = kfreq/kq
+        ao VocBand as,an,kfreq,kbw
+        amix = ao + abnd
+        xout amix
+endop
+
+instr 108 ; VOCODER
+
+    ifreq cpspch p5
+    p3 = p3*2
+
+    seed 0
+    S1 = "plugs.wav"
+    imin = 100
+    imax = 10000
+    iskip = random(0,9)
+    ; kenv madsr 0.1,0.1,0.7,0.1
+    ;kenv expseg 0.001,0.01,p4+0.001,p3-0.02,p4+0.001,0.01,0.001
+    kenv linseg 0,0.01,p4,p3-0.11,p4,0.1,0
+    asig diskin2 S1,1,iskip,1
+    ; kthresh = -90
+    ; kloknee = -50
+    ; khiknee = -30
+    ; kratio  = 3
+    ; katt    = 0.1
+    ; krel    = .5
+    ; ilook   = .02
+    ; asig  compress2 asig, asig, kthresh, kloknee, khiknee, kratio, katt, krel, ilook
+    ;asig loscil 1,1,73,1,1
+    ;ap,aloc plltrack asig,0.1
+    krms port rms(asig),0.01
+    ;anoi vco krms,ap,1,0,-1
+    anoi vco krms,ifreq,1,0,-1
+    aout Vocoder anoi,asig,imin,imax,10,30
+
+    chnmix (aout*3+asig*0.7)*p6*kenv, "mixl"
+    chnmix (aout*3+asig*0.7)*p6*kenv, "mixr"
+endin
+
+instr 109 ; WURLITZER
+
+    kfreq = cpspch(p5)
+    kc1 = random(1,1.3)
+    kc2 = 0.3
+    kvdepth = 0.35
+    kvrate = 5
+    ifn1 = -1
+    ifn2 = -1
+    ifn3 = -1
+    ifn4 = 53
+    ivfn = -1
+    ;kenv expseg 0.00001,0.01,p4,p3-0.02,p4,0.01,0.00001
+    kenv linseg 0,0.01,p4,p3-0.11,p4,0.1,0
+    asig fmwurlie p4*kenv, kfreq, kc1, kc2, kvdepth, kvrate, ifn1, ifn2, ifn3, ifn4, ivfn
+    chnmix asig*p6*0.3, "mixl"
+	chnmix asig*p6*0.3, "mixr"
+
 endin
 
 instr 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72 ; DRUMS
@@ -127,8 +229,8 @@ instr 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28
 	elseif ftchnls(p1) == 2 then
 	    asigl, asigr loscil p4, 1, p1, 1, 0
 	endif
-	chnmix asigl, "mixl"
-	chnmix asigr, "mixr"
+	chnmix asigl*p6, "mixl"
+	chnmix asigr*p6, "mixr"
 endin
 
 
@@ -139,6 +241,7 @@ instr 1000 ; mixer
     ;asigr butterlp asigr, 5000
     areverbl,areverbr freeverb asigl,asigr,0.6,0.7
     outs asigl*1+areverbl*1.5,asigr*1+areverbr*1.5
+    ; outs asigl,asigr
     chnclear "mixl"
     chnclear "mixr"
 endin
@@ -217,4 +320,5 @@ f 69 0 0 1 "drums/univox/univox_Perc1.wav" 0 0 0
 f 70 0 0 1 "drums/univox/univox_Perc2.wav" 0 0 0
 f 71 0 0 1 "drums/univox/univox_Quijada.wav" 0 0 0
 f 72 0 0 1 "drums/univox/univox_Snare2.wav" 0 0 0
+f 73 0 0 1 "plugs.wav" 0 0 0
 i 1000 0 -1

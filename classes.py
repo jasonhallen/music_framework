@@ -6,7 +6,7 @@ from rules import *
 class Piece:
     """A class used to represent the entire piece of music."""
 
-    def __init__(self, melody_voices, drum_voices, bass_voices):
+    def __init__(self, melody_voices, drum_voices, bass_voices, tempo, swing):
         """Initialize the piece of music"""
         self.mode = Mode()
         self.offset = self._set_offset()
@@ -15,10 +15,12 @@ class Piece:
         self.melody_voices = melody_voices
         self.drum_voices = drum_voices
         self.bass_voices = bass_voices
+        self.amp_scale = 0.8**(melody_voices+drum_voices+bass_voices-1) #math.sqrt(melody_voices+drum_voices+bass_voices)
         self.voice_list = self._set_voices()
         self.play_count = 0
         self.rule_engine = RuleEngine(self)
-        self.swing_offset = random()/4
+        self.tempo = tempo
+        self.swing_offset = swing # random()/4
         self.max_sections = randrange(25,50)
         self.section_list = []
 
@@ -53,8 +55,8 @@ class Piece:
         return Voice(name, csnd_instrument, register, line_length, self)
 
     def perform(self):
-        tempo = randrange(300,360)
-        output = f"t 0 {tempo}\n"
+        # tempo = randrange(300,360)
+        output = f"t 0 {self.tempo}\n"
         # section_number = 0
         print(f"MAX SECTIONS: {self.max_sections}")
         print("INSTRUMENTS")
@@ -254,7 +256,7 @@ class Note:
         else:
             swing_offset = 0
         if self.on_off != 0 and self.voice.mute != 0:
-            output = f"i {self.voice.csnd_instrument} [{self.piece.play_count} + {swing_offset}] {self.duration} [{self.amplitude}*{self.on_off}*{self.voice.mute}/8] [{self.frequency}] ;{self.piece.mode}" + "\n"
+            output = f"i {self.voice.csnd_instrument} [{self.piece.play_count} + {swing_offset}] {self.duration} [{self.amplitude}*{self.on_off}*{self.voice.mute}] [{self.frequency}] {self.piece.amp_scale} ;{self.piece.mode}" + "\n"
         else:
             output = ""
         return output
