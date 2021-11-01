@@ -8,4 +8,4 @@ Generative music framework which composes music in Python and renders it electro
 * **rules.py** - Defines the `RuleEngine` and `Rule` classes, which are responsible for transforming the melodies of the instruments throught the piece.  `Rules` are constructed using `@classmethods` decorators so that `Rules` can perform a variety of transformations. Examples of transformations include `Chord Change`, `Evolve`, `Mimic`, and `Mute`.
 * **orchestra.orc** - Contains the Csound orchestra code that defines the instruments available for random selection by `classes.py`.  Instruments include plucked string, organ, Rhodes piano, marimba, bass, and many different drum kits.
 * **elements.py** - Static lists of data used by `classes.py` for selecting scales, chord voicings, and instrumentation.
-* **main.py** - 
+* **main.py** - Instrucsts `classes.py` to generate a piece of music, which it saves as a Csound score. Launches an instance of Csound via [`ctcsound`](https://github.com/csound/ctcsound) (a Python wrapper of the Csound API) and passes the score to it. Csound performs the score instantly.
